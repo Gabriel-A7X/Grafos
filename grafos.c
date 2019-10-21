@@ -21,8 +21,8 @@ Fila *ColocaVerticeNaFila(Fila *F, int raiz);
 Fila *RemoveVerticeNaFila(Fila *F);
 int VerificaSeTaNaFila(Fila *F, int elemento);
 void exibeFila(Fila *F);
-void buscaProf(Grafos *gr, int raiz, int *visitado, int *qtdVisitados);
-void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, int cont, int *qtdVisitados);
+void buscaProf(Grafos *gr, int raiz, int *visitado);
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado);
 
 void main(){
     Grafos *gr;
@@ -54,7 +54,7 @@ void main(){
     insereAresta(&(gr), 5, 2, 0, 0);
     insereAresta(&(gr), 1, 2, 0, 0);
     int vis[6];
-    buscaProf(gr, 6, vis, &qtdVisitados);
+    buscaProf(gr, 6, vis);
     //buscaEmLargura(gr, 6);
 }
 
@@ -91,7 +91,7 @@ void insereAresta(Grafos **gr, int origem, int destino, int peso, int ehDigrafo)
     if(*gr != NULL){
         if(origem > 0 && origem <= (*gr)->nVertices){
             if(destino > 0 && destino <= (*gr)->nVertices){
-                (*gr)->arestas[origem-1][(*gr)->grau[origem-1]] = destino;
+                (*gr)->arestas[origem-1][(*gr)->grau[origem-1]] = destino-1;
             }
             if((*gr)->ehPonderado){
                 (*gr)->pesos[origem-1][(*gr)->grau[origem-1]] = peso;
@@ -104,26 +104,34 @@ void insereAresta(Grafos **gr, int origem, int destino, int peso, int ehDigrafo)
     }
 }
 
-void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, int cont, int *qtdVisitados){
+/*void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, int cont){
     int i;
-    visitado[raiz] = cont;
-    (*qtdVisitados)++;
-    for(i=0; i<=gr->grau[raiz-1]; i++){
-        if(*qtdVisitados < gr->nVertices){
-            if(visitado[gr->arestas[raiz-1][i]] == 0){
-                printf("%d Visitou %d\n", raiz, gr->arestas[raiz-1][i]);
-                buscaEmProfundidade(gr, gr->arestas[raiz-1][i], visitado, cont+1, qtdVisitados);
-            }
+    visitado[raiz] = -1;
+    for(i=0; i<=gr->grau[raiz]; i++){
+        if(!visitado[gr->arestas[raiz][i]]){
+            printf("%d Visitou %d\n", raiz+1, gr->arestas[raiz][i]+1);
+            buscaEmProfundidade(gr, gr->arestas[raiz][i], visitado, cont+1);
+        }
+    }
+}*/
+
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado){
+    int i;
+    visitado[raiz] = -1;
+    for(i=0; i<=gr->grau[raiz]; i++){
+        if(!visitado[gr->arestas[raiz][i]]){
+            printf("%d Visitou %d\n", raiz+1, gr->arestas[raiz][i]+1);
+            buscaEmProfundidade(gr, gr->arestas[raiz][i], visitado);
         }
     }
 }
 
-void buscaProf(Grafos *gr, int raiz, int *visitado, int *qtdVisitados){
+void buscaProf(Grafos *gr, int raiz, int *visitado){
     int i, cont = 1;
     for(i=0; i<gr->nVertices; i++){
         visitado[i] = 0;
     }
-    buscaEmProfundidade(gr, raiz, visitado, cont, qtdVisitados);
+    buscaEmProfundidade(gr, raiz-1, visitado);
 }
 
 
