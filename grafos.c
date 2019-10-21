@@ -9,9 +9,20 @@ struct fila{
     int vertice;
     struct fila *prox;    
 };
+struct pilha{
+    int n;
+    struct pilha *prox;
+};
+
+struct maior{
+    int tam;
+    struct pilha *caminho;
+};
 
 typedef struct fila Fila;
 typedef struct grafos Grafos;
+typedef struct pilha Pilha;
+typedef struct maior Maior;
 
 int menu();
 Grafos* criaGrafo(int vertice, int ehPonderado);
@@ -21,8 +32,17 @@ Fila *ColocaVerticeNaFila(Fila *F, int raiz);
 Fila *RemoveVerticeNaFila(Fila *F);
 int VerificaSeTaNaFila(Fila *F, int elemento);
 void exibeFila(Fila *F);
-void buscaProf(Grafos *gr, int raiz, int *visitado);
-void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado);
+void buscaProf(Grafos *gr, int raiz, int *visitado, Maior *cam, int money);
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha *caminho, int cont, Maior *cam, int money);
+void listarAdj(Grafos *gr);
+void push(int v, Pilha **p);
+void pop(Pilha **p);
+void copiaPilha(Pilha **p1,Pilha **p2);
+void mostraCam(Pilha *caminho);
+void LiberaP(Pilha **p);
+int fimDeRota(Grafos *gr, int raiz, int money, int *visitado);
+
+int rota=0;
 
 void main(){
     Grafos *gr;
@@ -45,17 +65,24 @@ void main(){
                 break;
         }
     }while(choice != 0);*/
-    gr = criaGrafo(6, 0);
-    insereAresta(&(gr), 6, 4, 0, 0);
-    insereAresta(&(gr), 3, 2, 0, 0);
-    insereAresta(&(gr), 4, 5, 0, 0);
-    insereAresta(&(gr), 4, 3, 0, 0);
-    insereAresta(&(gr), 5, 1, 0, 0);
-    insereAresta(&(gr), 5, 2, 0, 0);
-    insereAresta(&(gr), 1, 2, 0, 0);
+    gr = criaGrafo(6, 1);
+    insereAresta(&(gr), 5, 3, 2, 0);
+    insereAresta(&(gr), 2, 1, 5, 0);
+    insereAresta(&(gr), 3, 4, 4, 0);
+    insereAresta(&(gr), 3, 2, 6, 0);
+    insereAresta(&(gr), 4, 0, 2, 0);
+    insereAresta(&(gr), 4, 1, 1, 0);
+    insereAresta(&(gr), 0, 1, 3, 0);
     int vis[6];
-    buscaProf(gr, 6, vis);
-    //buscaEmLargura(gr, 6);
+    Maior *cam=(Maior*)malloc(sizeof(Maior));
+    cam->tam=0;
+    cam->caminho=NULL;
+    //listarAdj(gr);
+    // buscaProf(gr, 0, vis, cam, 12);
+    
+    buscaEmLargura(gr, 5);
+    // mostraCam(cam->caminho);
+    // printf("\n");
 }
 
 int menu(){
@@ -63,6 +90,15 @@ int menu(){
     printf("1-Cria Grafo\n2-Insere Aresta\n0-Sair\n");
     scanf("%d", &choice);
     return choice;
+}
+
+void mostraCam(Pilha *caminho){
+    if(caminho==NULL){
+        printf("O melhor caminho é:\n");
+    }else{
+        mostraCam(caminho->prox);
+        printf("%d ",caminho->n);
+    }
 }
 
 Grafos* criaGrafo(int vertice, int ehPonderado){
@@ -89,14 +125,14 @@ Grafos* criaGrafo(int vertice, int ehPonderado){
 
 void insereAresta(Grafos **gr, int origem, int destino, int peso, int ehDigrafo){
     if(*gr != NULL){
-        if(origem > 0 && origem <= (*gr)->nVertices){
+        if(origem >= 0 && origem <= (*gr)->nVertices){
             if(destino > 0 && destino <= (*gr)->nVertices){
-                (*gr)->arestas[origem-1][(*gr)->grau[origem-1]] = destino-1;
+                (*gr)->arestas[origem][(*gr)->grau[origem]] = destino;
             }
             if((*gr)->ehPonderado){
-                (*gr)->pesos[origem-1][(*gr)->grau[origem-1]] = peso;
+                (*gr)->pesos[origem][(*gr)->grau[origem]] = peso;
             }
-            (*gr)->grau[origem-1]++;
+            (*gr)->grau[origem]++;
             if(!ehDigrafo){
                 insereAresta(gr, destino, origem, peso, 1);
             }
@@ -115,23 +151,62 @@ void insereAresta(Grafos **gr, int origem, int destino, int peso, int ehDigrafo)
     }
 }*/
 
-void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado){
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha *caminho, int cont, Maior *cam, int money){
     int i;
     visitado[raiz] = -1;
-    for(i=0; i<=gr->grau[raiz]; i++){
-        if(!visitado[gr->arestas[raiz][i]]){
-            printf("%d Visitou %d\n", raiz+1, gr->arestas[raiz][i]+1);
-            buscaEmProfundidade(gr, gr->arestas[raiz][i], visitado);
+    push(raiz,&caminho);
+    for(i=0; i<gr->grau[raiz]; i++){
+        if(!visitado[gr->arestas[raiz][i]] && (money - gr->pesos[raiz][i])>=0){
+            //printf("%d Visitou %d\n", raiz, gr->arestas[raiz][i]);
+            buscaEmProfundidade(gr, gr->arestas[raiz][i], visitado, caminho, cont+1, cam, (money - gr->pesos[raiz][i]));
         }
     }
+    /*if(fimDeRota(gr,raiz,money,visitado)){
+        mostraCam(caminho);
+        printf("\n");
+        rota++;*/
+        if(cont>cam->tam){
+            LiberaP(&cam->caminho);
+            copiaPilha(&caminho,&cam->caminho);
+            cam->tam=cont;
+        }
+    //}
+    pop(&caminho);
+    visitado[raiz]=0;
 }
 
-void buscaProf(Grafos *gr, int raiz, int *visitado){
+/*int fimDeRota(Grafos *gr, int raiz, int money, int *visitado){
+    int ret=0;
+    for(int i=0; i<gr->grau[raiz]; i++){
+        if((money - gr->pesos[raiz][i])<0){
+            ret+=1;
+        }
+    }
+    if(ret==gr->grau[raiz]){
+        ret=1;
+    }
+    return ret;
+}*/
+
+void buscaProf(Grafos *gr, int raiz, int *visitado, Maior *cam, int money){
     int i, cont = 1;
     for(i=0; i<gr->nVertices; i++){
         visitado[i] = 0;
     }
-    buscaEmProfundidade(gr, raiz-1, visitado);
+    Pilha *Caminho=(Pilha*)malloc(sizeof(Pilha));
+    Caminho=NULL;
+    cont=0;
+    buscaEmProfundidade(gr, raiz, visitado, Caminho, cont, cam, money);
+}
+
+void listarAdj(Grafos *gr){
+    for(int i=0;i<gr->nVertices;i++){
+        printf("adjacencias de %d\n",i);
+        for(int j=0;j<gr->grau[i];j++){
+            printf("%d ",gr->arestas[i][j]);
+        }
+        printf("\n");
+    }
 }
 
 
@@ -143,17 +218,17 @@ void buscaEmLargura(Grafos *gr, int raiz){
     int *marcados;
     int elemento;
     marcados = (int*)calloc(gr->nVertices, sizeof(int));
-    marcados[raiz-1] = 1;
+    marcados[raiz] = 1;
     qtVerticesMarcados++;
     F = ColocaVerticeNaFila(F, raiz);
     while(F!=NULL){
         vertice1 = F->vertice;
-        pointer = gr->arestas[vertice1-1];
-        for(int i=0; i<gr->grau[vertice1-1]; i++){
+        pointer = gr->arestas[vertice1];
+        for(int i=0; i<gr->grau[vertice1]; i++){
             elemento = pointer[i];
-            if(marcados[elemento-1]==0){
+            if(marcados[elemento]==0){
                 printf("%d visitou %d.\n", vertice1, elemento);
-                marcados[elemento-1]=1;
+                marcados[elemento]=1;
                 F=ColocaVerticeNaFila(F, elemento);
             //    exibeFila(F);
             }else if(VerificaSeTaNaFila(F, elemento)){
@@ -206,3 +281,41 @@ void exibeFila(Fila *F){
     puts("\n");
 }
 
+void push(int v, Pilha **p){
+    Pilha *cel=(Pilha*)malloc(sizeof(Pilha));
+    cel->n=v;
+    cel->prox=*p;
+    *p=cel;
+}
+
+void pop(Pilha **p){
+    Pilha *aux;
+    aux=*p;
+    if(*p == NULL){
+        *p=(*p)->prox;
+        free(aux);
+    }
+}
+
+void copiaPilha(Pilha **p1,Pilha **p2){
+    Pilha *aux=(Pilha*)malloc(sizeof(Pilha));
+    if(*p1 == NULL){
+        *p2 = NULL;
+    }else{
+        copiaPilha(&(*p1)->prox,p2);
+        aux=*p1;
+        aux->prox=*p2;
+        *p2 = aux;
+    }
+}
+
+void LiberaP(Pilha **p){
+    if(*p==NULL){
+        *p=NULL;
+    }else{
+        LiberaP(&(*p)->prox);
+        Pilha *aux=*p;
+        *p=NULL;
+        free(aux);
+    }
+}
