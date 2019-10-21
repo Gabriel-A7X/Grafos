@@ -5,8 +5,7 @@ struct grafos{
     int nVertices, ehPonderado, *grau;
     int **arestas, **pesos;
 };
-struct fila
-{
+struct fila{
     int vertice;
     struct fila *prox;    
 };
@@ -22,10 +21,12 @@ Fila *ColocaVerticeNaFila(Fila *F, int raiz);
 Fila *RemoveVerticeNaFila(Fila *F);
 int VerificaSeTaNaFila(Fila *F, int elemento);
 void exibeFila(Fila *F);
+void buscaProf(Grafos *gr, int raiz, int *visitado, int *qtdVisitados);
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, int cont, int *qtdVisitados);
 
 void main(){
     Grafos *gr;
-    int choice, vertice, ponderado, digrafo, peso, origem, destino;
+    int choice, vertice, ponderado, digrafo, peso, origem, destino, qtdVisitados = 0;
     /*do{
         choice = menu();
         switch(choice){
@@ -52,7 +53,9 @@ void main(){
     insereAresta(&(gr), 5, 1, 0, 0);
     insereAresta(&(gr), 5, 2, 0, 0);
     insereAresta(&(gr), 1, 2, 0, 0);
-    buscaEmLargura(gr, 6);
+    int vis[6];
+    buscaProf(gr, 6, vis, &qtdVisitados);
+    //buscaEmLargura(gr, 6);
 }
 
 int menu(){
@@ -101,6 +104,29 @@ void insereAresta(Grafos **gr, int origem, int destino, int peso, int ehDigrafo)
     }
 }
 
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, int cont, int *qtdVisitados){
+    int i;
+    visitado[raiz] = cont;
+    (*qtdVisitados)++;
+    for(i=0; i<=gr->grau[raiz-1]; i++){
+        if(*qtdVisitados < gr->nVertices){
+            if(visitado[gr->arestas[raiz-1][i]] == 0){
+                printf("%d Visitou %d\n", raiz, gr->arestas[raiz-1][i]);
+                buscaEmProfundidade(gr, gr->arestas[raiz-1][i], visitado, cont+1, qtdVisitados);
+            }
+        }
+    }
+}
+
+void buscaProf(Grafos *gr, int raiz, int *visitado, int *qtdVisitados){
+    int i, cont = 1;
+    for(i=0; i<gr->nVertices; i++){
+        visitado[i] = 0;
+    }
+    buscaEmProfundidade(gr, raiz, visitado, cont, qtdVisitados);
+}
+
+
 void buscaEmLargura(Grafos *gr, int raiz){
     Fila *F=NULL;
     int qtVerticesMarcados = 0;
@@ -108,14 +134,10 @@ void buscaEmLargura(Grafos *gr, int raiz){
     int *pointer;
     int *marcados;
     int elemento;
-
     marcados = (int*)calloc(gr->nVertices, sizeof(int));
-
     marcados[raiz-1] = 1;
     qtVerticesMarcados++;
-
     F = ColocaVerticeNaFila(F, raiz);
-    
     while(F!=NULL){
         vertice1 = F->vertice;
         pointer = gr->arestas[vertice1-1];
@@ -138,9 +160,7 @@ void buscaEmLargura(Grafos *gr, int raiz){
 Fila *ColocaVerticeNaFila(Fila *F, int raiz){
     Fila *novo, *aux;
     novo = (Fila*)malloc(sizeof(Fila));
-
     novo->vertice = raiz;
-
     if(F==NULL){
         F = novo;
         novo->prox = NULL;
@@ -149,24 +169,20 @@ Fila *ColocaVerticeNaFila(Fila *F, int raiz){
         aux->prox=novo;
         novo->prox = NULL;
     }
-    
     return F;
 }
 
 Fila *RemoveVerticeNaFila(Fila *F){
     Fila *aux;
-
     aux = F->prox;
     F = NULL;
     free(F);
-
     return aux;
 }
 
 int VerificaSeTaNaFila(Fila *F, int raiz){
     Fila *aux = F;
     int retorno = 0;
-
     for(aux; aux!=NULL; aux=aux->prox){
         if(aux->vertice==raiz){
             retorno=1;
@@ -181,3 +197,4 @@ void exibeFila(Fila *F){
         printf("%d ", aux->vertice);
     puts("\n");
 }
+
