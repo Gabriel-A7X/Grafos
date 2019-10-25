@@ -28,14 +28,14 @@ typedef struct maior Maior;
 int menu();
 Grafos* criaGrafo(int vertice, int ehPonderado);
 void insereAresta(Grafos **gr, int origem, int destino, int peso, int ehDigrafo);
-void buscaLarg(Grafos *gr, int raiz, int *visitado, Maior *cam, int money);
-void buscaEmLargura(Grafos *gr, int raiz, int *visitado, Pilha *caminho, int cont, Maior *cam, int money);
+void buscaLarg(Grafos *gr, int raiz, int *visitado, Maior **cam, int money);
+void buscaEmLargura(Grafos *gr, int raiz, int *visitado, Pilha **caminho, int cont, Maior **cam, int money);
 Fila *ColocaVerticeNaFila(Fila *F, int raiz);
 Fila *RemoveVerticeNaFila(Fila *F);
 int VerificaSeTaNaFila(Fila *F, int elemento);
 void exibeFila(Fila *F);
 void buscaProf(Grafos *gr, int raiz, int *visitado, Maior *cam, int money);
-void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha *caminho, int cont, Maior *cam, int money);
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, int cont, Maior *cam, int money);
 void listarAdj(Grafos *gr);
 void push(int v, Pilha **p);
 void pop(Pilha **p);
@@ -82,10 +82,10 @@ void main(){
     cam->tam=0;
     cam->caminho=NULL;
     //listarAdj(gr);
-    // buscaProf(gr, 0, vis, cam, 12);
+     buscaProf(gr, 0, vis, cam, 12);
     
-    buscaLarg(gr, 2, vis, cam, 12);
-    mostraCam(cam->caminho);
+    //buscaLarg(gr, 2, vis, &cam, 12);
+    //mostraCam(cam->caminho);
     // printf("\n");
 }
 
@@ -171,14 +171,16 @@ int **ordena(int **mat, int cont){
     return visita;
 }
 
-void buscaEmLargura(Grafos *gr, int raiz, int *visitado, Pilha *caminho, int cont, Maior *cam, int money){
+void buscaEmLargura(Grafos *gr, int raiz, int *visitado, Pilha **caminho, int cont, Maior **cam, int money){
     int i, **vaiVisitar, contVisita = 0;
     vaiVisitar = (int**) malloc(sizeof(int*)*2);
     for(i=0; i<2; i++){
         vaiVisitar[i] = (int*) malloc(sizeof(int)*gr->grau[raiz]);
     }
     visitado[raiz] = -1;
-    push(raiz,&caminho);
+    push(raiz,caminho);
+    //printf("\n");
+    //mostraCam(*caminho);
     for(i=0; i<gr->grau[raiz]; i++){
         if(!visitado[gr->arestas[raiz][i]] && (money - gr->pesos[raiz][i])>=0){
             //printf("%d Visitou %d\n", raiz, gr->arestas[raiz][i]);
@@ -189,31 +191,35 @@ void buscaEmLargura(Grafos *gr, int raiz, int *visitado, Pilha *caminho, int con
     }
     int **mat;
     mat = ordena(vaiVisitar, contVisita);
-    print(mat,contVisita);
+    //print(mat,contVisita);
     for(i=0; i<contVisita; i++){
         buscaEmLargura(gr, mat[0][i], visitado, caminho, cont+1, cam, (money - mat[1][i]));
     }
-        if(cont>cam->tam){
-            LiberaP(&cam->caminho);
-            copiaPilha(&caminho,&cam->caminho);
-            cam->tam=cont;
+        if(cont>(*cam)->tam){
+            LiberaP(&(*cam)->caminho);
+            (*cam)->caminho=NULL;
+            copiaPilha(caminho,&(*cam)->caminho);
+            (*cam)->tam=cont;
+            /*printf("\n");
+            mostraCam((*cam)->caminho);*/
         }
-    pop(&caminho);
+    pop(caminho);
     visitado[raiz]=0;
 }
 
 void print(int **mat,int cont){
-    for(int i=0;i<=cont;i++){
+    printf("\n");
+    for(int i=0;i<cont;i++){
         printf("%d ",mat[0][i]);
     }
     printf("\n");
-    for(int i=0;i<=cont;i++){
+    for(int i=0;i<cont;i++){
         printf("%d ",mat[1][i]);
     }
     printf("\n\n");
 }
 
-void buscaLarg(Grafos *gr, int raiz, int *visitado, Maior *cam, int money){
+void buscaLarg(Grafos *gr, int raiz, int *visitado, Maior **cam, int money){
     int i, cont = 1;
     for(i=0; i<gr->nVertices; i++){
         visitado[i] = 0;
@@ -221,7 +227,8 @@ void buscaLarg(Grafos *gr, int raiz, int *visitado, Maior *cam, int money){
     Pilha *Caminho=(Pilha*)malloc(sizeof(Pilha));
     Caminho=NULL;
     cont=0;
-    buscaEmLargura(gr, raiz, visitado, Caminho, cont, cam, money);
+    buscaEmLargura(gr, raiz, visitado, &Caminho, cont, cam, money);
+    mostraCam((*cam)->caminho);
 }
 
 /*void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, int cont){
@@ -235,10 +242,13 @@ void buscaLarg(Grafos *gr, int raiz, int *visitado, Maior *cam, int money){
     }
 }*/
 
-void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha *caminho, int cont, Maior *cam, int money){
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, int cont, Maior *cam, int money){
     int i;
     visitado[raiz] = -1;
-    push(raiz,&caminho);
+    push(raiz,caminho);
+    
+            //printf("\n");
+            //mostraCam(*caminho);
     for(i=0; i<gr->grau[raiz]; i++){
         if(!visitado[gr->arestas[raiz][i]] && (money - gr->pesos[raiz][i])>=0){
             //printf("%d Visitou %d\n", raiz, gr->arestas[raiz][i]);
@@ -251,11 +261,15 @@ void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha *caminho, in
         rota++;*/
         if(cont>cam->tam){
             LiberaP(&cam->caminho);
-            copiaPilha(&caminho,&cam->caminho);
+            cam->caminho=NULL;
+            copiaPilha(caminho,&cam->caminho);
             cam->tam=cont;
         }
     //}
-    pop(&caminho);
+    pop(caminho);
+            //printf("\n");
+            //mostraCam(*caminho);
+            //printf("\ntamanho = %d\n",cont);
     visitado[raiz]=0;
 }
 
@@ -280,7 +294,7 @@ void buscaProf(Grafos *gr, int raiz, int *visitado, Maior *cam, int money){
     Pilha *Caminho=(Pilha*)malloc(sizeof(Pilha));
     Caminho=NULL;
     cont=0;
-    buscaEmProfundidade(gr, raiz, visitado, Caminho, cont, cam, money);
+    buscaEmProfundidade(gr, raiz, visitado, &Caminho, cont, cam, money);
 }
 
 void listarAdj(Grafos *gr){
@@ -367,6 +381,7 @@ void exibeFila(Fila *F){
 
 void push(int v, Pilha **p){
     Pilha *cel=(Pilha*)malloc(sizeof(Pilha));
+    printf("adicionado: %d\n",v);
     cel->n=v;
     cel->prox=*p;
     *p=cel;
@@ -375,8 +390,9 @@ void push(int v, Pilha **p){
 void pop(Pilha **p){
     Pilha *aux;
     aux=*p;
-    if(*p == NULL){
-        *p=(*p)->prox;
+    if(*p != NULL){
+        printf("removido: %d\n",(*p)->n);
+        (*p)=(*p)->prox;
         free(aux);
     }
 }
