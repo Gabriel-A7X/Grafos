@@ -82,10 +82,11 @@ void main(){
     cam->tam=0;
     cam->caminho=NULL;
     //listarAdj(gr);
-     buscaProf(gr, 0, vis, cam, 12);
+    //buscaProf(gr, 0, vis, cam, 12);
     
-    //buscaLarg(gr, 2, vis, &cam, 12);
-    //mostraCam(cam->caminho);
+    buscaLarg(gr, 3, vis, &cam, 12);
+    mostraCam(cam->caminho);
+    printf("\n");
     // printf("\n");
 }
 
@@ -228,7 +229,6 @@ void buscaLarg(Grafos *gr, int raiz, int *visitado, Maior **cam, int money){
     Caminho=NULL;
     cont=0;
     buscaEmLargura(gr, raiz, visitado, &Caminho, cont, cam, money);
-    mostraCam((*cam)->caminho);
 }
 
 /*void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, int cont){
@@ -246,9 +246,6 @@ void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, i
     int i;
     visitado[raiz] = -1;
     push(raiz,caminho);
-    
-            //printf("\n");
-            //mostraCam(*caminho);
     for(i=0; i<gr->grau[raiz]; i++){
         if(!visitado[gr->arestas[raiz][i]] && (money - gr->pesos[raiz][i])>=0){
             //printf("%d Visitou %d\n", raiz, gr->arestas[raiz][i]);
@@ -265,11 +262,7 @@ void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, i
             copiaPilha(caminho,&cam->caminho);
             cam->tam=cont;
         }
-    //}
     pop(caminho);
-            //printf("\n");
-            //mostraCam(*caminho);
-            //printf("\ntamanho = %d\n",cont);
     visitado[raiz]=0;
 }
 
@@ -381,7 +374,6 @@ void exibeFila(Fila *F){
 
 void push(int v, Pilha **p){
     Pilha *cel=(Pilha*)malloc(sizeof(Pilha));
-    printf("adicionado: %d\n",v);
     cel->n=v;
     cel->prox=*p;
     *p=cel;
@@ -390,10 +382,11 @@ void push(int v, Pilha **p){
 void pop(Pilha **p){
     Pilha *aux;
     aux=*p;
+    //mostraCam(*p);
     if(*p != NULL){
-        printf("removido: %d\n",(*p)->n);
         (*p)=(*p)->prox;
         free(aux);
+        aux = NULL;
     }
 }
 
@@ -403,7 +396,7 @@ void copiaPilha(Pilha **p1,Pilha **p2){
         *p2 = NULL;
     }else{
         copiaPilha(&(*p1)->prox,p2);
-        aux=*p1;
+        aux->n = (*p1)->n;
         aux->prox=*p2;
         *p2 = aux;
     }
