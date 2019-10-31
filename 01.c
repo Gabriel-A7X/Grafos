@@ -1,10 +1,17 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<math.h>
 
 struct grafos{
     int nVertices, ehPonderado, *grau;
     int **arestas, **pesos;
+};
+
+typedef struct grafos Grafos;
+
+struct torre{
+    Grafos *gr;
+    int estado[81][4];
+    int nivel[81];
 };
 
 struct pilha{
@@ -17,62 +24,62 @@ struct maior{
     struct pilha *caminho;
 };
 
-typedef struct grafos Grafos;
+
 typedef struct pilha Pilha;
 typedef struct maior Maior;
+typedef struct torre Torre;
 
 Grafos* criaGrafo(int vertice, int ehPonderado);
 void insereAresta(Grafos **gr, int origem, int destino, int peso, int ehDigrafo);
-void buscaProf(Grafos *gr, int raiz, int *visitado, Maior *cam, int money);
-void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, int cont, Maior *cam, int money);
+void buscaProf(Grafos *gr, int raiz, int *visitado, Maior *cam);
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, int cont, Maior *cam);
 void push(int v, Pilha **p);
 void pop(Pilha **p);
 void copiaPilha(Pilha **p1,Pilha **p2);
 void mostraCam(Pilha *caminho);
 void LiberaP(Pilha **p);
-int naoEhAdjacente(Grafos *gr, int vertice, int check);
+void conectar(Torre *hanoi);
+int move1Disco(Torre *hanoi, int origem, int destino, int *pos);
+int podeBotar(Torre *hanoi, int destino, int pos);
+void mostraEstados(Torre *hanoi);
 
 int main(){
-    Grafos *gr;
+    int i, j, k, l;
+    Torre *hanoi; 
+    //3^n => 3 ^ 4 == 81
+    //Grafos *gr;
+    hanoi->gr = criaGrafo(81, 0);
     Maior *cam=(Maior*)malloc(sizeof(Maior));
     cam->tam=0;
     cam->caminho=NULL;
-    int i, j, money, cidades, rota, pedagio, origem;
-    printf("Digite a quantidade de dinheiro disponivel:\n");
-    scanf("%d", &money);
-    printf("Digite a quantidade cidades:\n");
-    scanf("%d", &cidades);
-    int vis[cidades];
-    gr = criaGrafo(cidades, 1);
-    for(i=0; i<cidades; i++){
-        for(j=0; j<cidades; j++){
-            //Fazer com que quando escolha ij não pergunte ji.
-            if(i != j && naoEhAdjacente(gr, j, i)){
-                printf("Existe uma estrada entre a cidade %d e a cidade %d?[1-Sim/0-Não]:\n", i, j);
-                scanf("%d", &rota);
-                if(rota == 1){
-                    printf("Digite o valor do pedagio dessa estrada:\n");
-                    scanf("%d", &pedagio);
-                    insereAresta(&(gr), i, j, pedagio, 0);
+    int contPos = 0;
+    for(i=0; i<3; i++){
+        for(j=0; j<3; j++){
+            for(k=0; k<3; k++){
+                for(l=0; l<3; l++){
+                    hanoi->estado[contPos][i] = i+1;
+                    hanoi->estado[contPos][j] = j+1;
+                    hanoi->estado[contPos][k] = k+1;
+                    hanoi->estado[contPos][l] = l+1;
+                    contPos++;
                 }
             }
         }
     }
-    printf("Digite a cidade de origem:\n");
-    scanf("%d", &origem);
-    buscaProf(gr, origem, vis, cam, money);
-    mostraCam(cam->caminho);
-    return 0;
-}
-
-int naoEhAdjacente(Grafos *gr, int vertice, int check){
-    int i, result = 1;
-    for(i=0; i<gr->grau[vertice]; i++){
-        if(gr->arestas[vertice][i] == check){
-            result = 0;
+    contPos = 0;
+    /*for(i=0; i<3; i++){
+        for(j=0; j<3; j++){
+            for(k=0; k<3; k++){
+                for(l=0; l<3; l++){
+                    printf("%d, %d, %d, %d\n", hanoi->estado[contPos][i], hanoi->estado[contPos][j], hanoi->estado[contPos][k], hanoi->estado[contPos][l] = l+1);
+                    contPos++;
+                }
+            }
         }
-    }
-    return result;
+    }*/
+    conectar(hanoi);
+    mostraEstados(hanoi);
+    return 0;
 }
 
 void mostraCam(Pilha *caminho){
@@ -123,14 +130,73 @@ void insereAresta(Grafos **gr, int origem, int destino, int peso, int ehDigrafo)
     }
 }
 
+int move1Disco(Torre *hanoi, int origem, int destino, int *pos){
+    int i, cont = 0;
+    for(i=0; i<4; i++){
+        if(hanoi->estado[origem][i] != hanoi->estado[destino][i]){
+            *pos = i;
+            cont++;
+        }
+    }
+    if(cont != 1){
+        cont = 0;
+    }
+    return cont;
+}
 
-void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, int cont, Maior *cam, int money){
+int podeBotar(Torre *hanoi, int destino, int pos){
+    int i, result = 1;
+    for(i=pos+1; i<4; i++){
+        if(hanoi->estado[destino][pos] == hanoi->estado[destino][i]){
+            result = 0;
+        }
+    }
+    return result;
+}
+
+void conectar(Torre *hanoi){
+    int i, j, pos;
+    for(i=0; i<81; i++){
+        for(j=i; j<81; j++){
+            if(move1Disco(hanoi, i, j, &pos)){
+                if(podeBotar(hanoi, i, pos)){
+                    if(podeBotar(hanoi, j, pos)){
+                        insereAresta(&hanoi->gr, i, j, 0, 0);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void mostraEstados(Torre *hanoi){
+    int i, j, k, l, contPos = 0;
+    for(i=0; i<3; i++){
+        for(j=0; j<3; j++){
+            for(k=0; k<3; k++){
+                for(l=0; l<3; l++){
+                    printf("%d: %d, %d, %d, %d\n",contPos, hanoi->estado[contPos][i], hanoi->estado[contPos][j], hanoi->estado[contPos][k], hanoi->estado[contPos][l] = l+1);
+                    contPos++;
+                }
+            }
+        }
+    }
+     for(i=0; i<hanoi->gr->nVertices; i++){
+         printf("%d: ", i);
+        for(j=0; j<hanoi->gr->grau[i]; j++){
+            printf("%d ", hanoi->gr->arestas[i][j]);
+        }
+        printf("\n");
+     }
+}
+
+void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, int cont, Maior *cam){
     int i;
     visitado[raiz] = -1;
     push(raiz,caminho);
     for(i=0; i<gr->grau[raiz]; i++){
-        if(!visitado[gr->arestas[raiz][i]] && (money - gr->pesos[raiz][i])>=0){
-            buscaEmProfundidade(gr, gr->arestas[raiz][i], visitado, caminho, cont+1, cam, (money - gr->pesos[raiz][i]));
+        if(!visitado[gr->arestas[raiz][i]]){
+            buscaEmProfundidade(gr, gr->arestas[raiz][i], visitado, caminho, cont+1, cam);
         }
     }
         if(cont>cam->tam){
@@ -144,7 +210,7 @@ void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, i
 }
 
 
-void buscaProf(Grafos *gr, int raiz, int *visitado, Maior *cam, int money){
+void buscaProf(Grafos *gr, int raiz, int *visitado, Maior *cam){
     int i, cont = 1;
     for(i=0; i<gr->nVertices; i++){
         visitado[i] = 0;
@@ -152,7 +218,7 @@ void buscaProf(Grafos *gr, int raiz, int *visitado, Maior *cam, int money){
     Pilha *Caminho=(Pilha*)malloc(sizeof(Pilha));
     Caminho=NULL;
     cont=0;
-    buscaEmProfundidade(gr, raiz, visitado, &Caminho, cont, cam, money);
+    buscaEmProfundidade(gr, raiz, visitado, &Caminho, cont, cam);
 }
 
 void push(int v, Pilha **p){

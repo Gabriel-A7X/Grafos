@@ -31,6 +31,7 @@ void copiaPilha(Pilha **p1,Pilha **p2);
 void mostraCam(Pilha *caminho);
 void LiberaP(Pilha **p);
 int **ordena(int **mat, int cont);
+int naoEhAdjacente(Grafos *gr, int vertice, int check);
 
 int main(){
     Grafos *gr;
@@ -47,7 +48,7 @@ int main(){
     for(i=0; i<cidades; i++){
         for(j=0; j<cidades; j++){
             //Fazer com que quando escolha ij não pergunte ji.
-            if(i != j && !gr->arestas[j][i]){
+            if(i != j && naoEhAdjacente(gr, j, i)){
                 printf("Existe uma estrada entre a cidade %d e a cidade %d?[1-Sim/0-Não]:\n", i, j);
                 scanf("%d", &rota);
                 if(rota == 1){
@@ -63,6 +64,16 @@ int main(){
     buscaLarg(gr, origem, vis, &cam, money);
     mostraCam(cam->caminho);
     return 0;
+}
+
+int naoEhAdjacente(Grafos *gr, int vertice, int check){
+    int i, result = 1;
+    for(i=0; i<gr->grau[vertice]; i++){
+        if(gr->arestas[vertice][i] == check){
+            result = 0;
+        }
+    }
+    return result;
 }
 
 void mostraCam(Pilha *caminho){
