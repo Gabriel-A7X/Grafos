@@ -10,7 +10,7 @@ typedef struct grafos Grafos;
 
 struct torre{
     Grafos *gr;
-    int estado[81][4];
+    int **estado;
     int nivel[81];
 };
 
@@ -45,7 +45,8 @@ void mostraEstados(Torre *hanoi);
 
 int main(){
     int i, j, k, l;
-    Torre *hanoi; 
+    Torre *hanoi=(Torre*)malloc(sizeof(Torre)); 
+    hanoi->gr=NULL;
     //3^n => 3 ^ 4 == 81
     //Grafos *gr;
     hanoi->gr = criaGrafo(81, 0);
@@ -53,30 +54,25 @@ int main(){
     cam->tam=0;
     cam->caminho=NULL;
     int contPos = 0;
+    int pos=0;
+    hanoi->estado=(int**)malloc(sizeof(int*)*81);
+    for(i=0;i<81;i++){
+        hanoi->estado[i]=(int*)malloc(sizeof(int)*4);
+    }
     for(i=0; i<3; i++){
         for(j=0; j<3; j++){
             for(k=0; k<3; k++){
                 for(l=0; l<3; l++){
-                    hanoi->estado[contPos][i] = i+1;
-                    hanoi->estado[contPos][j] = j+1;
-                    hanoi->estado[contPos][k] = k+1;
-                    hanoi->estado[contPos][l] = l+1;
+                    hanoi->estado[contPos][0] = i+1;
+                    hanoi->estado[contPos][1] = j+1;
+                    hanoi->estado[contPos][2] = k+1;
+                    hanoi->estado[contPos][3] = l+1;
                     contPos++;
                 }
             }
         }
     }
     contPos = 0;
-    /*for(i=0; i<3; i++){
-        for(j=0; j<3; j++){
-            for(k=0; k<3; k++){
-                for(l=0; l<3; l++){
-                    printf("%d, %d, %d, %d\n", hanoi->estado[contPos][i], hanoi->estado[contPos][j], hanoi->estado[contPos][k], hanoi->estado[contPos][l] = l+1);
-                    contPos++;
-                }
-            }
-        }
-    }*/
     conectar(hanoi);
     mostraEstados(hanoi);
     return 0;
@@ -171,15 +167,9 @@ void conectar(Torre *hanoi){
 
 void mostraEstados(Torre *hanoi){
     int i, j, k, l, contPos = 0;
-    for(i=0; i<3; i++){
-        for(j=0; j<3; j++){
-            for(k=0; k<3; k++){
-                for(l=0; l<3; l++){
-                    printf("%d: %d, %d, %d, %d\n",contPos, hanoi->estado[contPos][i], hanoi->estado[contPos][j], hanoi->estado[contPos][k], hanoi->estado[contPos][l] = l+1);
-                    contPos++;
-                }
-            }
-        }
+    for(i=0; i<81; i++){
+        printf("%d: %d, %d, %d, %d\n",contPos, hanoi->estado[contPos][0], hanoi->estado[contPos][1], hanoi->estado[contPos][2], hanoi->estado[contPos][3]);
+        contPos++;
     }
      for(i=0; i<hanoi->gr->nVertices; i++){
          printf("%d: ", i);
