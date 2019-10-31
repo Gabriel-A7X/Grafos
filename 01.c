@@ -4,6 +4,7 @@
 struct grafos{
     int nVertices, ehPonderado, *grau;
     int **arestas, **pesos;
+    int nivel[81];
 };
 
 typedef struct grafos Grafos;
@@ -11,8 +12,13 @@ typedef struct grafos Grafos;
 struct torre{
     Grafos *gr;
     int **estado;
-    int nivel[81];
 };
+
+struct fila{
+    int vertice;
+    struct fila *prox;    
+};
+typedef struct fila Fila;
 
 struct pilha{
     int n;
@@ -42,6 +48,13 @@ void conectar(Torre *hanoi);
 int move1Disco(Torre *hanoi, int origem, int destino, int *pos);
 int podeBotar(Torre *hanoi, int destino, int pos);
 void mostraEstados(Torre *hanoi);
+void buscaEmLargura(Grafos *gr, int raiz);
+void copiaFila(Fila **p1,Fila **p2);
+void LiberaF(Fila **p);
+Fila *ColocaVerticeNaFila(Fila *F, int raiz);
+Fila *RemoveVerticeNaFila(Fila *F);
+int VerificaSeTaNaFila(Fila *F, int raiz);
+void exibeFila(Fila *F);
 
 int main(){
     int i, j, k, l;
@@ -74,6 +87,7 @@ int main(){
     }
     contPos = 0;
     conectar(hanoi);
+    buscaEmLargura(hanoi->gr,0);
     mostraEstados(hanoi);
     return 0;
 }
@@ -176,7 +190,7 @@ void mostraEstados(Torre *hanoi){
         for(j=0; j<hanoi->gr->grau[i]; j++){
             printf("%d ", hanoi->gr->arestas[i][j]);
         }
-        printf("\n");
+        printf(" | Altura do no: %d\n",hanoi->gr->nivel[i]);
      }
 }
 
@@ -249,4 +263,107 @@ void LiberaP(Pilha **p){
         *p=NULL;
         free(aux);
     }
+}
+
+void buscaEmLargura(Grafos *gr, int raiz){
+    Fila *F=NULL,*F2=NULL;
+    int i,cont = 0, j = 0;
+    int vertice1,altura=0;
+    int *pointer;
+    int *marcados;
+    int elemento;
+    marcados = (int*)calloc(gr->nVertices, sizeof(int));
+    marcados[raiz] = 1;
+    cont++;
+    F = ColocaVerticeNaFila(F, raiz);
+    do{
+        LiberaF(&F2);
+        while(F!=NULL){
+            vertice1 = F->vertice;
+            pointer = gr->arestas[vertice1];
+            for(int i=0; i<gr->grau[vertice1]; i++){
+                elemento = pointer[i];
+                if(marcados[elemento]==0){
+                    //printf("%d visitou %d.\n", vertice1, elemento);
+                    marcados[elemento]=1;
+                    F2=ColocaVerticeNaFila(F2, elemento);
+                //    exibeFila(F);
+                }else if(VerificaSeTaNaFila(F, elemento)){
+                    //printf("%d visitou %d.\n", vertice1, elemento);
+                }
+            }
+            gr->nivel[vertice1]=altura;
+            F=RemoveVerticeNaFila(F);        
+            //exibeFila(F);                
+        }
+        //exibeFila(F2);
+        printf("%d\n",altura);
+        copiaFila(&F2,&F);
+        altura++;
+    }while (F2!=NULL);
+    
+}
+
+void exibeFila(Fila *F){
+    Fila *aux = F;
+    for(aux;aux!=NULL;aux=aux->prox)
+        printf("%d ", aux->vertice);
+    puts("\n");
+}
+
+void copiaFila(Fila **p1,Fila **p2){
+    Fila *aux=(Fila*)malloc(sizeof(Fila));
+    if(*p1 == NULL){
+        *p2 = NULL;
+    }else{
+        copiaFila(&(*p1)->prox,p2);
+        aux->vertice = (*p1)->vertice;
+        aux->prox=*p2;
+        *p2 = aux;
+    }
+}
+
+void LiberaF(Fila **p){
+    if(*p==NULL){
+        *p=NULL;
+    }else{
+        LiberaF(&(*p)->prox);
+        Fila *aux=*p;
+        *p=NULL;
+        free(aux);
+    }
+}
+
+Fila *ColocaVerticeNaFila(Fila *F, int raiz){
+    Fila *novo, *aux;
+    novo = (Fila*)malloc(sizeof(Fila));
+    novo->vertice = raiz;
+    if(F==NULL){
+        F = novo;
+        novo->prox = NULL;
+    }else{
+        for(aux=F; aux->prox!=NULL; aux=aux->prox);
+        aux->prox=novo;
+        novo->prox = NULL;
+    }
+    return F;
+}
+
+Fila *RemoveVerticeNaFila(Fila *F){
+    Fila *aux;
+    aux = F->prox;
+    F = NULL;
+    free(F);
+    return aux;
+}
+
+int VerificaSeTaNaFila(Fila *F, int raiz){
+    Fila *aux = F;
+    int retorno = 0;
+    for(aux; aux!=NULL; aux=aux->prox){
+        if(aux->vertice==raiz){
+            retorno=1;
+        }
+    }
+    return retorno;
 }
