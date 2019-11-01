@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<math.h>
 
 struct grafos{
     int nVertices, ehPonderado, *grau;
@@ -26,8 +27,8 @@ struct pilha{
 };
 
 struct maior{
-    int tam;
-    struct pilha *caminho;
+    float tam1, tam2;
+    struct pilha *caminho1, *caminho2;
 };
 
 
@@ -42,7 +43,7 @@ void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, i
 void push(int v, Pilha **p);
 void pop(Pilha **p);
 void copiaPilha(Pilha **p1,Pilha **p2);
-void mostraCam(Pilha *caminho);
+void mostraCam(Pilha *caminho, Torre *hanoi);
 void LiberaP(Pilha **p);
 void conectar(Torre *hanoi);
 int move1Disco(Torre *hanoi, int origem, int destino, int *pos);
@@ -55,6 +56,7 @@ Fila *ColocaVerticeNaFila(Fila *F, int raiz);
 Fila *RemoveVerticeNaFila(Fila *F);
 int VerificaSeTaNaFila(Fila *F, int raiz);
 void exibeFila(Fila *F);
+int converteEstado(Torre *hanoi, int *estado);
 
 int main(){
     int i, j, k, l;
@@ -64,9 +66,11 @@ int main(){
     //Grafos *gr;
     hanoi->gr = criaGrafo(81, 0);
     Maior *cam=(Maior*)malloc(sizeof(Maior));
-    cam->tam=0;
-    cam->caminho=NULL;
-    int contPos = 0;
+    cam->tam1=0;
+    cam->caminho1=NULL;
+    cam->tam2=INFINITY;
+    cam->caminho2=NULL;
+    int contPos = 0, vis[81], estado[4];
     int pos=0;
     hanoi->estado=(int**)malloc(sizeof(int*)*81);
     for(i=0;i<81;i++){
@@ -88,16 +92,32 @@ int main(){
     contPos = 0;
     conectar(hanoi);
     buscaEmLargura(hanoi->gr,0);
-    mostraEstados(hanoi);
+    //mostraEstados(hanoi);
+    printf("Digite o estado inicial da torre[numeros separados por espaco]:\n");
+    scanf("%d%d%d%d", &estado[0], &estado[1], &estado[2], &estado[3]);
+    buscaProf(hanoi->gr, converteEstado(hanoi, estado), vis, cam);
+    printf("O maior caminho possivel eh:\n");
+    mostraCam(cam->caminho1, hanoi);
+    printf("O menor caminho possivel eh:\n");
+    mostraCam(cam->caminho2, hanoi);
     return 0;
 }
 
-void mostraCam(Pilha *caminho){
+int converteEstado(Torre *hanoi, int *estado){
+    int i, result = -1;
+    for(i=0; i<81; i++){
+        if(hanoi->estado[i][0] == estado[0] && hanoi->estado[i][1] == estado[1] && hanoi->estado[i][2] == estado[2] && hanoi->estado[i][3] == estado[3]){
+            result = i;
+        }
+    }
+    return result;
+}
+
+void mostraCam(Pilha *caminho, Torre *hanoi){
     if(caminho==NULL){
-        printf("O melhor caminho é:\n");
     }else{
-        mostraCam(caminho->prox);
-        printf("%d ",caminho->n);
+        mostraCam(caminho->prox, hanoi);
+        printf("%d: %d,%d,%d,%d\n",caminho->n, hanoi->estado[caminho->n][0], hanoi->estado[caminho->n][1], hanoi->estado[caminho->n][2], hanoi->estado[caminho->n][3]);
     }
 }
 
@@ -199,16 +219,24 @@ void buscaEmProfundidade(Grafos *gr, int raiz, int *visitado, Pilha **caminho, i
     visitado[raiz] = -1;
     push(raiz,caminho);
     for(i=0; i<gr->grau[raiz]; i++){
-        if(!visitado[gr->arestas[raiz][i]]){
+        if(!visitado[gr->arestas[raiz][i]] && gr->nivel[gr->arestas[raiz][i]] >= gr->nivel[raiz]){
             buscaEmProfundidade(gr, gr->arestas[raiz][i], visitado, caminho, cont+1, cam);
         }
     }
-        if(cont>cam->tam){
-            LiberaP(&cam->caminho);
-            cam->caminho=NULL;
-            copiaPilha(caminho,&cam->caminho);
-            cam->tam=cont;
+    if(raiz == 80){
+        if(cont>cam->tam1){
+            LiberaP(&cam->caminho1);
+            cam->caminho1=NULL;
+            copiaPilha(caminho,&cam->caminho1);
+            cam->tam1=cont;
         }
+        if(cont < cam->tam2){
+            LiberaP(&cam->caminho2);
+            cam->caminho2=NULL;
+            copiaPilha(caminho,&cam->caminho2);
+            cam->tam2=cont;
+        }
+    }
     pop(caminho);
     visitado[raiz]=0;
 }
