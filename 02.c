@@ -19,6 +19,44 @@ struct pilha{
 };
 typedef struct pilha Pilha;
 
+Grafos* criaGrafo(int vertice, int ehPonderado);
+void insereAresta(Grafos **gr, int origem, int destino, int peso, int ehDigrafo);
+Estados *inicializaEst();
+int tamaEst(int *estado);
+int temColisao(int *estado);
+int temSaida(int *estado);
+int** troca(int **mat);
+int *tira(int *estado);
+void printEstado(int *estado);
+int *tiraC(int *estado);
+int *proximoEstado(int *estAtual);
+int igual(int *est,int *est2);
+int procuraEst(int **estados,int *estado);
+void adj(Estados *est);
+void push(int v, Pilha **p);
+int MontaCam(Grafos *gr,int atual,Pilha **caminho,int *cont);
+void exibePilha(Pilha *P,Estados *est);
+void LigarEstados(Estados *est,int numeroEstados);
+
+int main(){
+    Estados *est=inicializaEst();
+    Pilha *p=NULL;
+    int *test=(int*)calloc(4,sizeof(int));
+    printf("digite a configuração das formigas separadas por espaço: ");
+    for(int i=0;i<4;i++){
+        scanf("%i",&test[i]);
+    }
+    // test=proximoEstado(test);
+    // printEstado(test);
+    // printf("%d\n",procuraEst(est->mat,test));
+    LigarEstados(est,30);
+    // adj(est);
+    int cont=0;
+    MontaCam(est->gr,procuraEst(est->mat,test),&p,&cont);
+    printf("As formigas vão passar por %d rodada(s) até saírem\nSendo elas:\n",cont);
+    exibePilha(p,est);
+}
+
 int** troca(int **mat){
     int i;
     for(i=0;i<16;i++){
@@ -166,6 +204,7 @@ int *tira(int *estado){
     }
     return NovoEstado;
 }
+
 void printEstado(int *estado){
     int tam = tamaEst(estado);
         printf("(");
@@ -265,24 +304,4 @@ void exibePilha(Pilha *P,Estados *est){
         exibePilha(P->prox,est);
         printf("%d:",aux->n);printEstado(est->mat[aux->n]);
     }
-}
-
-int main(){
-    Estados *est=inicializaEst();
-    Pilha *p=NULL;
-    int *test=(int*)calloc(4,sizeof(int));
-    printf("digite a configuração das formigas separadas por espaço: ");
-    for(int i=0;i<4;i++){
-        scanf("%i",&test[i]);
-    }
-    // test=proximoEstado(test);
-    // printEstado(test);
-    // printf("%d\n",procuraEst(est->mat,test));
-    LigarEstados(est,30);
-    // adj(est);
-    int cont=0;
-    MontaCam(est->gr,procuraEst(est->mat,test),&p,&cont);
-    printf("As formigas vão passar por %d rodada(s) até saírem\nSendo elas:\n",cont);
-    exibePilha(p,est);
-    
 }
